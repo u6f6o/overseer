@@ -9,15 +9,15 @@
 (defn filter-empty [lines]
   (remove #( .startsWith % ";;;") lines))
 
-(defn headers [line]
+(defn extract-header [line]
   (map keyword (str/split line #";")))
 
-(defn parse-line [headers line]
-  (zipmap headers (str/split line #";")))
+(defn extract-content [header line]
+  (zipmap header (str/split line #";")))
 
 (defn lines->sheet [coll]
-  (let [head (headers (first coll))]
-    (map (partial parse-line head) (rest coll))))
+  (let [header (extract-header (first coll))]
+    (map (partial extract-content header) (rest coll))))
 
 (defn parse-file [csv-file]
   (let [lines (file->lines csv-file)]
