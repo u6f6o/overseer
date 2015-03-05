@@ -6,7 +6,7 @@
 (defn sum-up
   ([sheet desc-filter sum-column]
     (->> sheet
-         (filter #(desc-filter (get % :DESC)))
+         (filter #(desc-filter (:DESC %)))
          (map sum-column)
          (remove str/blank?)
          (map read-string)

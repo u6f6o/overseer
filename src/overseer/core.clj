@@ -25,10 +25,8 @@
 (defn matching-desc? [haystack needles]
   (some (partial contains-ic? haystack) needles))
 
-
 (def sheet
-  (with-open [csv-file (io/reader "/Users/u6f6o/Engineering/projects/private/overseer/in_out.csv")]
-    (doall (parse-file csv-file))))
+   (parse-file "/Users/u6f6o/Engineering/projects/private/overseer/in_out.csv"))
 
 (doseq [in-position in-positions]
   (let [match-fn (fn [x](matching-desc? x (:search-tokens in-position)))
