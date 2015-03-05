@@ -4,7 +4,7 @@
   (:require [clojure.string :as str]))
 
 (defrecord InPosition [desc search-tokens])
-(defrecord DiffPosition [desc search-tokens distribution])
+(defrecord DiffPosition [desc search-tokens dist])
 
 (def in-positions
   [(->InPosition    "Gitschthaler"      ["Gitschthaler"])
@@ -25,11 +25,21 @@
 (defn matching-desc? [haystack needles]
   (some (partial contains-ic? haystack) needles))
 
-(with-open [csv-file (io/reader "/Users/u6f6o/Engineering/projects/private/overseer/in_out.csv")]
-  (let [sheet (parse-file csv-file)]
-    (doseq [sum-position sum-positions]
-      (let [desc (str (:desc sum-position) ": " )
-            sum-in (sum-up sheet #(matching-desc? % (:search-tokens sum-position)) :IN)
-            sum-out (sum-up sheet #(matching-desc? % (:search-tokens sum-position)) :OUT)]
-        (prn (str desc (- sum-out sum-in)))))))
 
+(def sheet
+  (with-open [csv-file (io/reader "/Users/u6f6o/Engineering/projects/private/overseer/in_out.csv")]
+    (doall (parse-file csv-file))))
+
+(doseq [in-position in-positions]
+  (let [match-fn (fn [x](matching-desc? x (:search-tokens in-position)))
+        sum-in (sum-up sheet match-fn :IN)]
+    (prn (:desc in-position) sum-in)))
+
+(doseq [diff-position diff-positions]
+  (let [match-fn (fn [x](matching-desc? x (:search-tokens diff-position)))
+        sum-in (sum-up sheet match-fn :IN)
+        sum-out (sum-up sheet match-fn :OUT)
+        diff (- sum-out sum-in)
+        dist-ug (* diff (:dist diff-position))
+        dist-zk (- diff dist-ug)]
+    (prn (:desc diff-position) diff " - " dist-ug " - " dist-zk)))
