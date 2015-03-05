@@ -1,7 +1,6 @@
 (ns overseer.calc
   (:use [overseer.parse :only [parse-lines]])
-  (:require [clojure.string :as str]
-            [clojure.java.io :as io]))
+  (:require [clojure.string :as str]))
 
 (defn sum-up
   ([sheet desc-filter sum-column]
