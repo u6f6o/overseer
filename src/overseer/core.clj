@@ -5,27 +5,37 @@
             [clojure.java.io :as io]))
 
 (def sheets
-  {:acc-stmts
-   (->> "account.csv"
-        io/resource
-        io/file
-        file->sheet)
-   :expenses
-   (->> "distribution.csv"
-        io/resource
-        io/file
-        file->sheet)
-   :income
-   ()})
+  (let [parse-csv (comp file->sheet io/file io/resource)]
+    {:acc-stmts (parse-csv "account.csv")
+     :distribution (parse-csv "distribution.csv")
+     :expenses (parse-csv "expenses.csv")
+     :income ()}))
 
-(defn filter-matching [acc-stmts expense]
+(defn filter-expenses [acc-stmts expense]
   (let [tokens (str/split (:tokens expense) #",")]
     (filter #(matches-ignore-case? (:desc %) tokens) acc-stmts)))
 
-(defn sum-column [acc-stmts column]
-  (->> (remove (comp str/blank? column) acc-stmts)
-       (map (comp parse-number column))
-       (apply +)))
+(defn filter-income [acc-stmts holder]
+  (filter #(matches-ignore-case? (:desc %) [holder]) acc-stmts))
+
+(defn find-dist [expense dists]
+  (let [type (:type expense)]
+    (first (filter #(= type (:type %)) dists))))
+
+(defn extract-holders [dists]
+  (let [surname-keys
+        (->> (map keys dists)
+             (flatten)
+             (filter #(.startsWith (name %) "surname-"))
+             (distinct))]
+    (reduce #(into %1 (vals (select-keys %2 surname-keys))) #{} dists)))
+
+(def sum-column
+  (memoize
+   (fn [acc-stmts column]
+     (->> (remove (comp str/blank? column) acc-stmts)
+          (map (comp parse-number column))
+          (apply +)))))
 
 (defn sum-in [acc-stmts]
   (sum-column acc-stmts :in))
@@ -36,34 +46,37 @@
 (defn calc-out-vs-in [acc-stmts]
   (- (sum-out acc-stmts) (sum-in acc-stmts)))
 
-(defn calc-share-1 [acc-stmts ratio]
+(defn calc-share [acc-stmts ratio]
   (* (calc-out-vs-in acc-stmts) ratio))
 
-(defn calc-share-2 [acc-stmts ratio]
-  (- (calc-out-vs-in acc-stmts) (calc-share-1 acc-stmts ratio)))
-
-(defn summarize-expense [acc-stmts expense]
-  (let [matching-stmts (filter-matching acc-stmts expense)
-        ratio (parse-number (:ratio expense))]
+(defn summarize-expense [acc-stmts expense dist]
+  (let [matching-stmts (filter-expenses acc-stmts expense)
+        ratio-1 (parse-number (:ratio-1 dist))
+        ratio-2 (parse-number (:ratio-2 dist))]
     {:sum-in  (sum-in matching-stmts)
      :sum-out (sum-out matching-stmts)
-     :ratio   (eval ratio)
-     :share-1 (calc-share-1 matching-stmts ratio)
-     :share-2 (calc-share-2 matching-stmts ratio)}))
+     :ratio   (eval ratio-1)
+     :share-1 (calc-share matching-stmts ratio-1)
+     :share-2 (calc-share matching-stmts ratio-2)}))
 
 (defn summarize-expenses [sheets]
   (let [acc-stmts (:acc-stmts sheets)
+        dists (:distribution sheets)
         expenses (:expenses sheets)]
-    (map #(merge % (summarize-expense acc-stmts %)) expenses)))
+    (map #(merge % (summarize-expense acc-stmts % (find-dist % dists))) expenses)))
 
-(defn summarize-income [sheets acc-holder-1 acc-holder-2]
-  (let [acc-stmts (:acc-stmts sheets)]
-    {:total (sum-in acc-stmts)}))
+(defn summarize-income [sheets]
+  (let [acc-stmts (:acc-stmts sheets)
+        holders (extract-holders (:distribution sheets))]
+    {:holder-1 (sum-in (filter-income acc-stmts (first holders)))
+     :holder-2 (sum-in (filter-income acc-stmts (second holders)))}))
 
-(defn summarize [sheets acc-holder-1 acc-holder-2]
+(defn summarize [sheets]
   (assoc sheets
          :expenses (summarize-expenses sheets)
-         :income (summarize-income sheets)))
+         :income (summarize-income sheets)
+    ))
 
-(summarize sheets)
+
+(println (:income (summarize sheets)))
 

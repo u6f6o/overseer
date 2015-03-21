@@ -12,7 +12,7 @@
   (remove (partial every? str/blank?) lines))
 
 (defn extract-header [line]
-  (map (comp keyword str/lower-case) line))
+  (map (comp keyword #(str/replace % "_" "-") str/lower-case) line))
 
 (defn extract-content [header line]
   (zipmap header line))
