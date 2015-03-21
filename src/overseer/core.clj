@@ -1,43 +1,69 @@
 (ns overseer.core
-  (:use [overseer.parse :only [parse-file]]
-        [overseer.calc :only [sum-up]])
-  (:require [clojure.string :as str]))
+  (:use [overseer.parse :only [file->sheet]]
+        [overseer.util])
+  (:require [clojure.string :as str]
+            [clojure.java.io :as io]))
 
-(defrecord InPosition [desc search-tokens])
-(defrecord DiffPosition [desc search-tokens dist])
+(def sheets
+  {:acc-stmts
+   (->> "account.csv"
+        io/resource
+        io/file
+        file->sheet)
+   :expenses
+   (->> "distribution.csv"
+        io/resource
+        io/file
+        file->sheet)
+   :income
+   ()})
 
-(def in-positions
-  [(->InPosition    "Gitschthaler"      ["Gitschthaler"])
-   (->InPosition    "Zwinz"             ["Zwinz"])])
+(defn filter-matching [acc-stmts expense]
+  (let [tokens (str/split (:tokens expense) #",")]
+    (filter #(matches-ignore-case? (:desc %) tokens) acc-stmts)))
 
-(def diff-positions
-  [(->DiffPosition  "Gas"               ["Montana"]                  55/100)
-   (->DiffPosition  "Versicherungen"    ["Versicher" "Landesbrand"]  1/2)
-   (->DiffPosition  "Müll"              ["Abfall"]                   1/2)
-   (->DiffPosition  "(Ab)wasser/Kanal"  ["Wasser"]                   3/4)
-   (->DiffPosition  "Zaun"              ["Stemmer"]                  1/2)
-   (->DiffPosition  "Heizung"           ["Bredl"]                    1/2)
-   (->DiffPosition  "Kamin"             ["Kamin"]                    1/2)])
+(defn sum-column [acc-stmts column]
+  (->> (remove (comp str/blank? column) acc-stmts)
+       (map (comp parse-number column))
+       (apply +)))
 
-(defn contains-ic? [haystack needle]
-  (re-find (re-pattern (str "(?i)" needle)) haystack))
+(defn sum-in [acc-stmts]
+  (sum-column acc-stmts :in))
 
-(defn matching-desc? [haystack needles]
-  (some (partial contains-ic? haystack) needles))
+(defn sum-out [acc-stmts]
+  (sum-column acc-stmts :out))
 
-(def sheet
-   (parse-file "/Users/u6f6o/Engineering/projects/private/overseer/in_out.csv"))
+(defn calc-out-vs-in [acc-stmts]
+  (- (sum-out acc-stmts) (sum-in acc-stmts)))
 
-(doseq [in-position in-positions]
-  (let [match-fn (fn [x](matching-desc? x (:search-tokens in-position)))
-        sum-in (sum-up sheet match-fn :IN)]
-    (prn (:desc in-position) sum-in)))
+(defn calc-share-1 [acc-stmts ratio]
+  (* (calc-out-vs-in acc-stmts) ratio))
 
-(doseq [diff-position diff-positions]
-  (let [match-fn (fn [x](matching-desc? x (:search-tokens diff-position)))
-        sum-in (sum-up sheet match-fn :IN)
-        sum-out (sum-up sheet match-fn :OUT)
-        diff (- sum-out sum-in)
-        dist-ug (* diff (:dist diff-position))
-        dist-zk (- diff dist-ug)]
-    (prn (:desc diff-position) diff " - " dist-ug " - " dist-zk)))
+(defn calc-share-2 [acc-stmts ratio]
+  (- (calc-out-vs-in acc-stmts) (calc-share-1 acc-stmts ratio)))
+
+(defn summarize-expense [acc-stmts expense]
+  (let [matching-stmts (filter-matching acc-stmts expense)
+        ratio (parse-number (:ratio expense))]
+    {:sum-in  (sum-in matching-stmts)
+     :sum-out (sum-out matching-stmts)
+     :ratio   (eval ratio)
+     :share-1 (calc-share-1 matching-stmts ratio)
+     :share-2 (calc-share-2 matching-stmts ratio)}))
+
+(defn summarize-expenses [sheets]
+  (let [acc-stmts (:acc-stmts sheets)
+        expenses (:expenses sheets)]
+    (map #(merge % (summarize-expense acc-stmts %)) expenses)))
+
+(defn summarize-income [sheets acc-holder-1 acc-holder-2]
+  (let [acc-stmts (:acc-stmts sheets)]
+    {:total (sum-in acc-stmts)}))
+
+(defn summarize [sheets acc-holder-1 acc-holder-2]
+  (assoc sheets
+         :expenses (summarize-expenses sheets)
+         :income (summarize-income sheets)))
+
+(summarize sheets)
+
