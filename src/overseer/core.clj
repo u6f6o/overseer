@@ -68,7 +68,8 @@
 (defn summarize-income [sheets]
   (let [acc-stmts (:acc-stmts sheets)
         holders (extract-holders (:distribution sheets))]
-    {:holder-1 (sum-in (filter-income acc-stmts (first holders)))
+    {:total (sum-in acc-stmts)
+     :holder-1 (sum-in (filter-income acc-stmts (first holders)))
      :holder-2 (sum-in (filter-income acc-stmts (second holders)))}))
 
 (defn summarize [sheets]
