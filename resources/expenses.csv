@@ -1,0 +1,8 @@
+TOPIC;TOKENS;TYPE
+Gas;Montana;GAS
+Versicherungen;Versicher,Landesbrand;INSURANCE
+Müll;Abfall;GARBAGE
+(Ab)wasser/Kanal;Wasser;WATER
+Zaun;Zaunmeister;DEFAULT
+Heizung;Ovenmaker;DEFAULT
+Kamin;Kamin;DEFAULT

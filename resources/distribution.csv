@@ -1,0 +1,6 @@
+TYPE;SURNAME_1;RATIO_1;SURNAME_2;RATIO_2
+GAS;Pinkel;55/100;Lüdenscheid;45/100
+INSURANCE;Pinkel;1/2;Lüdenscheid;1/2
+GARBAGE;Pinkel;1/2;Lüdenscheid;1/2
+WATER;Pinkel;3/4;Lüdenscheid;1/4
+DEFAULT;Pinkel;1/2;Lüdenscheid;1/2
