@@ -26,5 +26,3 @@
     (->> lines
          filter-empty
          lines->sheet)))
-
-(file->sheet (io/file (io/resource "distribution.csv")))
