@@ -1,36 +1,18 @@
 # overseer
 
-FIXME: description
+As I started digging deepter into clojure, I created this project to try certain things out and apply stuff I read in [Clojure Programming](http://www.clojurebook.com/) using a simple real life example (parsing csv, calculate certain stuff, print results in JSON format). 
 
-## Installation
+The main focus was to learn clojure and not to do things completelly right (e.g. there is no rounding after calculation which messes up the numbers etc.). 
 
-Download from http://example.com/FIXME.
+My current plan is to further add certain components/frameworks (probably REST) to get familiar with the clojure eco system. If this repo might be helpful to you, use it for whatever you desire. 
 
 ## Usage
 
-FIXME: explanation
-
-    $ java -jar overseer-0.1.0-standalone.jar [args]
-
-## Options
-
-FIXME: listing of options this app accepts.
-
-## Examples
-
-...
-
-### Bugs
-
-...
-
-### Any Other Sections
-### That You Think
-### Might be Useful
+   - clone the repo 
+   - lein run 
 
 ## License
 
-Copyright © 2015 FIXME
+Copyright © 2015 Ulf Gitschthaler
 
-Distributed under the Eclipse Public License either version 1.0 or (at
-your option) any later version.
+Distributed under the MIT License.
