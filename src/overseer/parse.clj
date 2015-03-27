@@ -17,12 +17,16 @@
 (defn extract-content [header line]
   (zipmap header line))
 
-(defn lines->sheet [coll]
-  (let [header (extract-header (first coll))]
-    (map (partial extract-content header) (rest coll))))
+(defn transform [lines]
+  (let [header (extract-header (first lines))]
+    (map (partial extract-content header) (rest lines))))
+
+(defn lines->sheet [lines]
+  (->> lines
+       filter-empty
+       transform))
 
 (defn file->sheet [csv-file]
-  (let [lines (file->lines csv-file)]
-    (->> lines
-         filter-empty
-         lines->sheet)))
+  (->> csv-file
+       file->lines
+       lines->sheet))
