@@ -1,4 +1,5 @@
 # overseer
+[![Build Status](https://travis-ci.org/u6f6o/overseer.svg?branch=master)](https://travis-ci.org/u6f6o/overseer)
 
 As I started digging deepter into clojure, I created this project to try certain things out and apply stuff I read in [Clojure Programming](http://www.clojurebook.com/) using a simple real life example (parsing csv, calculate certain stuff, print results in JSON format). 
 
