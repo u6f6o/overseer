@@ -14,12 +14,12 @@
 (defn extract-header [line]
   (map (comp keyword #(str/replace % "_" "-") str/lower-case) line))
 
-(defn extract-content [header line]
+(defn merge-content [header line]
   (zipmap header line))
 
 (defn transform [lines]
   (let [header (extract-header (first lines))]
-    (map (partial extract-content header) (rest lines))))
+    (map (partial merge-content header) (rest lines))))
 
 (defn lines->sheet [lines]
   (->> lines
