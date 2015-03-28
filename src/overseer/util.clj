@@ -2,9 +2,10 @@
   (:require [clojure.string :as str]))
 
 (defn matches-ignore-case? [s col]
-  (let [s (str/upper-case s)
-        col (map str/upper-case col)]
-    (some (partial #(.contains %1 %2) s) col)))
+  (and (not (nil? s)) (not (empty? col))
+    (let [s (str/upper-case s)
+          col (map str/upper-case col)]
+        (some (partial #(.contains %1 %2) s) col))))
 
 ;; found this on http://stackoverflow.com/questions/2640169/whats-the-easiest-way-to-parse-numbers-in-clojure
 ;; I use this because I also want ratio types to be parsed correctly
