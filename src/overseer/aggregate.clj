@@ -4,6 +4,15 @@
   (:require [clojure.string :as str]
             [clojure.java.io :as io]))
 
+
+(defn extract-holders [dists]
+  (let [surname-keys
+        (->> (map keys dists)
+             (flatten)
+             (filter #(.startsWith (name %) "surname-"))
+             (distinct))]
+    (reduce #(into %1 (vals (select-keys %2 surname-keys))) #{} dists)))
+
 (defn filter-expenses [acc-stmts expense]
   (let [tokens (str/split (:tokens expense) #",")]
     (filter #(matches-ignore-case? (:desc %) tokens) acc-stmts)))
@@ -15,20 +24,12 @@
   (let [type (:type expense)]
     (first (filter #(= type (:type %)) dists))))
 
-(defn extract-holders [dists]
-  (let [surname-keys
-        (->> (map keys dists)
-             (flatten)
-             (filter #(.startsWith (name %) "surname-"))
-             (distinct))]
-    (reduce #(into %1 (vals (select-keys %2 surname-keys))) #{} dists)))
-
 (def sum-column
   (memoize
-   (fn [acc-stmts column]
-     (->> (remove (comp str/blank? column) acc-stmts)
-          (map (comp parse-number column))
-          (apply +)))))
+    (fn [acc-stmts column]
+      (->> (remove (comp str/blank? column) acc-stmts)
+           (map (comp parse-number column))
+           (apply +)))))
 
 (defn sum-in [acc-stmts]
   (sum-column acc-stmts :in))
